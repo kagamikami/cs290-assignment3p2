@@ -23,10 +23,12 @@ function addFav(Gist){
     }
 
     var rmfromFav = document.createElement("button");
+
+    row.id = Gist.id;
     rmfromFav.onclick = function (){
       var gistId = this.getAttribute("gistId");
       var gistf = findById(gistId,FavGist);
-      removeFav(gistf);
+      removeFav(gistf,gistId);
     };
     rmfromFav.value = ' - ';
     rmfromFav.setAttribute("gistId", Gist.id);
@@ -51,8 +53,10 @@ function addFav(Gist){
   }
 }
 
-function removeFav(Gist){
+function removeFav(Gist,Id){
   var i;
+  var req = new XMLHttpRequest();
+  var url = 'https://api.github.com/gists?per_page=';
   for (key in FavGist){
     if (FavGist[key].id == Gist.id){
       i = key;
@@ -64,10 +68,18 @@ function removeFav(Gist){
       NewGist.push(FavGist[key]);
     }
   }
+  req.onreadystatechange = function(){
+  if(this.readyState === 4 && this.status == 200){
+      Gist = JSON.parse(this.responseText);
+  var ul = document.getElementById(Gist.id);
+  ul.parentNode.removeChild(ul);
+}
+};
   FavGist = NewGist;
   localStorage.setItem('Favourite',JSON.stringify(FavGist));
+  req.open('GET',url);
+  req.send();
 }
-
 function Favload(){
   for (key in FavGist){
     var fav = document.getElementById('favgist');
@@ -91,7 +103,7 @@ function Favload(){
     rmfromFav.onclick = function (){
       var gistId = this.getAttribute("gistId");
       var gistf = findById(gistId,FavGist);
-      removeFav(gistf);
+      removeFav(gistf,gistId);
     };
     rmfromFav.value = ' - ';
     rmfromFav.setAttribute("gistId", FavGist[key].id);
@@ -165,18 +177,27 @@ function searchresult(){
   }
   }
 }
-
+function search(){
+  gistlist();
+}
+function reload(){
+ // location.reload(true);
+  var ul = document.getElementById('gist');
+  while (ul.firstChild){
+    ul.removeChild(ul.firstChild);
+  }
+}
 function gistlist(){
-  //location.reload();
   var req = new XMLHttpRequest();
   if(!req){
     throw 'Unable to create HttpRequest.';
   }
-  var url = 'https://api.github.com/gists';
+  var url = 'https://api.github.com/gists?per_page=30';
   var i;
   req.onreadystatechange = function(){
   if(this.readyState === 4 && this.status == 200){
       Gist = JSON.parse(this.responseText);
+      reload();
       searchresult(Gist);
   }
   };
